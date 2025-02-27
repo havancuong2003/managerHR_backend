@@ -7,7 +7,7 @@ import path from "path";
 import morgan from "morgan";
 
 import dbConnect from "./config/dbConnect.js";
-
+import authRoute from "./routes/auth.route.js";
 dotenv.config();
 
 const app = express();
@@ -15,6 +15,8 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 app.use(morgan("dev"));
+
+app.use("/api/auth", authRoute);
 
 const PORT = process.env.PORT || 9999;
 const HOST = process.env.HOST || "localhost";
