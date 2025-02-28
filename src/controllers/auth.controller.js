@@ -74,7 +74,15 @@ const login = async (req, res) => {
     try {
         const { phone, password } = req.body;
         const user = await User.findOne({ phone });
+
         if (!user) {
+            return res.status(401).send({
+                error: "Login failed! Check authentication credentials",
+            });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
             return res.status(401).send({
                 error: "Login failed! Check authentication credentials",
             });
