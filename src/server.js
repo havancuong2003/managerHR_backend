@@ -5,6 +5,7 @@ import bodyParser from "body-parser";
 import mongoose from "mongoose";
 import path from "path";
 import morgan from "morgan";
+import cookieParser from "cookie-parser";
 
 import dbConnect from "./config/dbConnect.js";
 import authRoute from "./routes/auth.route.js";
@@ -15,6 +16,13 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 app.use(morgan("dev"));
+app.use(cookieParser());
+app.use(
+    cors({
+        origin: process.env.CLIENT_URL,
+        credentials: true,
+    })
+);
 
 app.use("/api/auth", authRoute);
 
