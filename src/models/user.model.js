@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
         phone: { type: String, required: true, unique: true },
         department: { type: String, required: true },
         position: { type: String, required: true },
-        salary: { type: Number, required: true },
+        base_salary: { type: Number, required: true },
         startDate: { type: String, required: true },
         password: { type: String, required: true },
         avatarUrl: { type: String },
