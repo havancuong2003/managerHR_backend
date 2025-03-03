@@ -11,6 +11,7 @@ import dbConnect from "./config/dbConnect.js";
 import authRoute from "./routes/auth.route.js";
 import positionRoute from "./routes/position.route.js";
 import employeeRoute from "./routes/employee.route.js";
+import departmentRoute from "./routes/department.route.js";
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use(
 app.use("/api/auth", authRoute);
 app.use("/api/positions", positionRoute);
 app.use("/api/employees", employeeRoute);
+app.use("/api/departments", departmentRoute);
 
 const PORT = process.env.PORT || 9999;
 const HOST = process.env.HOST || "localhost";
