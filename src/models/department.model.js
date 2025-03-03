@@ -6,7 +6,6 @@ const { Schema } = mongoose;
 const departmentSchema = new Schema({
     name: { type: String, required: true },
     description: { type: String },
-    manager_id: { type: Schema.Types.ObjectId, ref: "User" }, // Reference to the manager (User)
 });
 
 const Department = mongoose.model("Department", departmentSchema);
