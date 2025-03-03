@@ -7,8 +7,14 @@ const userSchema = new mongoose.Schema(
         gender: { type: String, enum: ["Nam", "Nữ"], required: true },
         address: { type: String, required: true },
         phone: { type: String, required: true, unique: true },
-        department: { type: String, required: true },
-        position: { type: String, required: true },
+        department: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Department",
+        },
+        positionId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Position",
+        },
         base_salary: { type: Number, required: true },
         startDate: { type: String, required: true },
         password: { type: String, required: true },

@@ -9,6 +9,8 @@ import cookieParser from "cookie-parser";
 
 import dbConnect from "./config/dbConnect.js";
 import authRoute from "./routes/auth.route.js";
+import positionRoute from "./routes/position.route.js";
+
 dotenv.config();
 
 const app = express();
@@ -27,7 +29,7 @@ app.use(
 );
 
 app.use("/api/auth", authRoute);
-
+app.use("/api/positions", positionRoute);
 const PORT = process.env.PORT || 9999;
 const HOST = process.env.HOST || "localhost";
 
