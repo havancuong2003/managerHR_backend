@@ -24,10 +24,10 @@ const register = async (req, res) => {
             phone,
             department,
             position,
-            salary,
+            base_salary,
             startDate,
         } = req.body;
-
+        console.log("check position", position);
         // Check if phone already exists
         const existingUser = await User.findOne({ phone });
         if (existingUser) {
@@ -54,8 +54,8 @@ const register = async (req, res) => {
             address,
             phone,
             department,
-            position,
-            salary,
+            positionId: position,
+            base_salary,
             startDate,
             password: hashedPassword,
             roleId: roleId,
