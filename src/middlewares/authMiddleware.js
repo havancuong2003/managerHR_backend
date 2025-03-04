@@ -29,7 +29,7 @@ const authMiddleware = async (req, res, next) => {
 const generateAccessToken = (user) => {
     console.log("new token");
     return jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-        expiresIn: "30s",
+        expiresIn: process.env.TIME_ACCESSTOKEN,
     });
 };
 
@@ -44,7 +44,7 @@ const generateRefreshToken = async (user) => {
     const refreshToken = jwt.sign(
         { id: user._id },
         process.env.JWT_REFRESH_SECRET,
-        { expiresIn: "15m" }
+        { expiresIn: process.env.TIME_REFRESHTOKEN }
     );
 
     await RefreshToken.create({
