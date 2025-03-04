@@ -17,18 +17,21 @@ dotenv.config();
 
 const app = express();
 
-app.use(bodyParser.json());
-app.use(morgan("dev"));
 app.use(cookieParser());
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use(
     cors({
-        origin: process.env.CLIENT_URL,
-        credentials: true,
+        origin: process.env.CLIENT_URL, // URL Frontend
+        credentials: true, // Cho phép gửi cookie qua request
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
     })
 );
+
+app.use(morgan("dev"));
 
 app.use("/api/auth", authRoute);
 app.use("/api/positions", positionRoute);
