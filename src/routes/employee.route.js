@@ -1,5 +1,8 @@
 import express from "express";
-import { getEmployees } from "../controllers/employee.controller.js";
+import {
+    getEmployees,
+    getEmployeeById,
+} from "../controllers/employee.controller.js";
 import {
     authMiddleware,
     roleMiddleware,
@@ -8,5 +11,10 @@ import {
 const router = express.Router();
 
 router.get("/", authMiddleware, roleMiddleware(["admin"]), getEmployees);
-
+router.get(
+    "/:id",
+    authMiddleware,
+    roleMiddleware(["employee"]),
+    getEmployeeById
+);
 export default router;
