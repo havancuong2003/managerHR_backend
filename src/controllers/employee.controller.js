@@ -14,11 +14,11 @@ export const getEmployees = async (req, res) => {
         }
 
         const employees = await Employee.find({ roleId: employeeRole._id })
-            .populate("department")
+            .populate("departmentId")
             .populate("positionId")
             .populate("roleId");
 
-        return res.status(200).json({ employees });
+        return res.status(200).json(employees);
     } catch (error) {
         console.error("Lỗi khi lấy danh sách nhân viên:", error);
         return res.status(500).json({ message: "Server error!" });

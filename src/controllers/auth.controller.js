@@ -46,14 +46,14 @@ const register = async (req, res) => {
             avatarUrl = responseAfterUpload.url; // Use the URL returned from Cloudinary
             console.log("check responseAfterUpload", responseAfterUpload);
         }
-
+        console.log("check position", position);
         const user = new User({
             fullName,
             dob,
             gender,
             address,
             phone,
-            department,
+            departmentId: department,
             positionId: position,
             base_salary,
             startDate,
