@@ -1,4 +1,5 @@
 import Department from "../models/department.model.js";
+import User from "../models/user.model.js";
 export const getDepartments = async (req, res) => {
     try {
         const departments = await Department.find();
@@ -47,6 +48,33 @@ export const deleteDepartment = async (req, res) => {
         return res.status(200).json({ department: deletedDepartment });
     } catch (error) {
         console.error("Lỗi khi xóa phòng ban:", error);
+        return res.status(500).json({ message: "Server error!" });
+    }
+};
+
+export const getEmployeesByDepartment = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const employees = await User.find({ departmentId: id })
+            .populate("departmentId")
+            .populate("positionId")
+            .populate("roleId");
+        return res.status(200).json(
+            employees.map((employee) => {
+                return {
+                    fullName: employee.fullName,
+                    dob: employee.dob,
+                    gender: employee.gender,
+                    address: employee.address,
+                    phone: employee.phone,
+                    positionName: employee.positionId.name,
+                    roleName: employee.roleId.name,
+                    baseSalary: employee.base_salary,
+                };
+            })
+        );
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách nhân viên theo phòng ban:", error);
         return res.status(500).json({ message: "Server error!" });
     }
 };
