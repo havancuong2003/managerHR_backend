@@ -12,7 +12,7 @@ const leaveRequestSchema = new Schema({
         enum: ["pending", "approved", "denied"],
         required: true,
     },
-    admin_reason: { type: String }, // Admin can add reason for approval/denial
+    manager_reason: { type: String }, // Admin can add reason for approval/denial
 });
 
 const LeaveRequest = mongoose.model("LeaveRequest", leaveRequestSchema);

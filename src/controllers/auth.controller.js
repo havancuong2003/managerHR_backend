@@ -187,14 +187,22 @@ export const refreshToken = async (req, res) => {
 
 const logout = async (req, res) => {
     try {
-        const token = req.cookies.refreshToken;
-        await RefreshToken.findOneAndDelete({ token });
+        const accessToken = req.cookies.accessToken;
+        const payload = jwt.verify(accessToken, process.env.JWT_SECRET);
+        console.log("check token", payload);
+        const user = await User.findById(payload.id);
 
-        res.clearCookie("refreshToken", {
-            httpOnly: true,
-            secure: true,
-            sameSite: "Strict",
-        });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        await RefreshToken.deleteOne({ userId: user._id });
+
+        // res.clearCookie("refreshToken", {
+        //     httpOnly: true,
+        //     secure: true,
+        //     sameSite: "Strict",
+        // });
         res.clearCookie("accessToken", {
             httpOnly: true,
             secure: true,
