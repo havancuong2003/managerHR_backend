@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema(
         password: { type: String, required: true },
         avatarUrl: { type: String },
         roleId: { type: mongoose.Schema.Types.ObjectId, ref: "Role" },
+        annualLeave: { type: Number, default: 3 }, 
     },
     { timestamps: true }
 );
