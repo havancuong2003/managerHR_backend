@@ -171,8 +171,6 @@ export const refreshToken = async (req, res) => {
             maxAge: 5 * 60 * 1000, // 5  phut
         });
 
-        console.log("Access token refreshed successfully");
-
         // ✅ Trả về Access Token mới
         res.status(200).json({
             accessToken: newAccessToken,
@@ -189,7 +187,7 @@ const logout = async (req, res) => {
     try {
         const accessToken = req.cookies.accessToken;
         const payload = jwt.verify(accessToken, process.env.JWT_SECRET);
-        console.log("check token", payload);
+
         const user = await User.findById(payload.id);
 
         if (!user) {

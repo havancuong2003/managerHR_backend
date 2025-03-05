@@ -42,14 +42,24 @@ const fileFilter = (req, file, cb) => {
 
 // File filter for Excel files
 const excelFileFilter = (req, file, cb) => {
-    if (
-        file.mimetype ===
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-        file.mimetype === "application/vnd.ms-excel"
-    ) {
+    const allowedMimes = [
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
+        "application/vnd.ms-excel", // .xls
+        "application/octet-stream", // Một số trường hợp Excel bị gửi với mime type này
+        "application/excel",
+        "application/x-excel",
+        "application/x-msexcel",
+    ];
+
+    if (allowedMimes.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new Error("Only Excel files are allowed!"), false);
+        cb(
+            new Error(
+                `Invalid file type. Allowed types are: Excel files. Received: ${file.mimetype}`
+            ),
+            false
+        );
     }
 };
 
