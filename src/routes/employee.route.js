@@ -6,6 +6,7 @@ import {
     backupData,
     restoreData,
     updateEmployeeByAdmin,
+    adminDeleteEmployee,
 } from "../controllers/employee.controller.js";
 import {
     authMiddleware,
@@ -31,10 +32,17 @@ router.get(
 router.get("/", authMiddleware, roleMiddleware(["admin"]), getEmployees); // Route tổng quát ("/") khai báo sau
 
 router.post(
-    "/admin/:id",
+    "/adminUpdate",
     authMiddleware,
     roleMiddleware(["admin"]),
     updateEmployeeByAdmin
+);
+
+router.delete(
+    "/adminDelete",
+    authMiddleware,
+    roleMiddleware(["admin"]),
+    adminDeleteEmployee
 );
 router.get(
     "/:id",

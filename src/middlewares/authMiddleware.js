@@ -27,7 +27,6 @@ const authMiddleware = async (req, res, next) => {
 };
 
 const generateAccessToken = (user) => {
-    console.log("new token");
     return jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
         expiresIn: process.env.TIME_ACCESSTOKEN,
     });
@@ -58,11 +57,7 @@ const generateRefreshToken = async (user) => {
 
 const roleMiddleware = (roles) => async (req, res, next) => {
     try {
-        console.log("hehe", roles);
-
         const getRole = await Role.findById(req.user.roleId); // ✅ Truy vấn đúng
-        console.log("getRole", getRole);
-        console.log("roles", roles);
 
         if (!getRole || !roles.includes(getRole.name)) {
             // ✅ Kiểm tra role

@@ -5,6 +5,7 @@ import XLSX from "xlsx";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import mongoose from "mongoose";
 
 // Thêm những dòng này để thay thế __dirname trong ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -25,7 +26,8 @@ export const getEmployees = async (req, res) => {
         const employees = await Employee.find({ roleId: employeeRole._id })
             .populate("departmentId")
             .populate("positionId")
-            .populate("roleId");
+            .populate("roleId")
+            .select("-password");
 
         return res.status(200).json(employees);
     } catch (error) {
@@ -39,7 +41,8 @@ export const getEmployeeById = async (req, res) => {
         const employee = await Employee.findById(req.params.id)
             .populate("departmentId")
             .populate("positionId")
-            .populate("roleId");
+            .populate("roleId")
+            .select("-password");
 
         if (!employee) {
             return res
@@ -56,7 +59,9 @@ export const getEmployeeById = async (req, res) => {
 
 export const updateEmployee = async (req, res) => {
     try {
-        const employee = await Employee.findById(req.params.id);
+        const employee = await Employee.findById(req.params.id).select(
+            "-password"
+        );
 
         if (!employee) {
             return res
@@ -66,7 +71,6 @@ export const updateEmployee = async (req, res) => {
         let avatarUrl = "";
         if (req.file) {
             const responseAfterUpload = await uploadMedia(req.file);
-            console.log("responseAfterUpload", responseAfterUpload);
 
             avatarUrl = responseAfterUpload.url;
         }
@@ -93,8 +97,6 @@ export const updateEmployee = async (req, res) => {
 
 export const backupData = async (req, res) => {
     try {
-        console.log("backupData");
-
         const employees = await Employee.find()
             .populate("departmentId")
             .populate("positionId")
@@ -102,8 +104,6 @@ export const backupData = async (req, res) => {
 
         // Xử lý dữ liệu trước khi xuất Excel
         const processedEmployees = employees.map((emp) => {
-            console.log("emp", emp);
-
             return {
                 ID: emp._id.toString(),
                 "Họ và tên": emp.fullName,
@@ -240,4 +240,56 @@ export const restoreData = async (req, res) => {
     }
 };
 
-export const updateEmployeeByAdmin = async (req, res) => {};
+export const updateEmployeeByAdmin = async (req, res) => {
+    try {
+        const id = req.body._id;
+
+        // Chuyển đổi ID thành ObjectId
+        const objectId = new mongoose.Types.ObjectId(id);
+
+        const employee = await Employee.findById(objectId);
+
+        if (!employee) {
+            return res.status(404).json({ message: "Employee not found" });
+        }
+
+        const updateEmployee = await Employee.findByIdAndUpdate(req.body._id, {
+            fullName: req.body.fullName,
+            dob: req.body.dob,
+            gender: req.body.gender,
+            address: req.body.address,
+            phone: req.body.phone,
+            departmentId: req.body.departmentId._id,
+            positionId: req.body.positionId._id,
+            base_salary: req.body.base_salary,
+            startDate: req.body.startDate,
+            avatarUrl: req.body.avatarUrl,
+        });
+
+        return res.status(200).json("updateEmployee");
+    } catch (error) {
+        console.error("Lỗi khi cập nhật nhân viên:", error);
+        return res
+            .status(500)
+            .json({ message: "Lỗi server khi cập nhật nhân viên!" });
+    }
+};
+
+export const adminDeleteEmployee = async (req, res) => {
+    try {
+        const employee = await Employee.findById(req.body.id);
+
+        if (!employee) {
+            return res.status(404).json({ message: "Employee not found" });
+        }
+
+        await Employee.findByIdAndDelete(req.body.id);
+
+        return res.status(200).json("deleteEmployee");
+    } catch (error) {
+        console.error("Lỗi khi xóa nhân viên:", error);
+        return res
+            .status(500)
+            .json({ message: "Lỗi server khi xóa nhân viên!" });
+    }
+};
