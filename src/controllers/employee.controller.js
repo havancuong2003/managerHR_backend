@@ -6,6 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
 import mongoose from "mongoose";
+import ActivityLog from "../models/activity_log.model.js";
 
 // Thêm những dòng này để thay thế __dirname trong ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -86,7 +87,18 @@ export const updateEmployee = async (req, res) => {
                     avatarUrl.length > 0 ? avatarUrl : employee.avatarUrl,
             },
             { new: true }
-        );
+        ).select("-password");
+        console.log("user", req.user);
+
+        const saveLogs = await ActivityLog.create({
+            userId: req.user._id,
+            action: "update",
+            affected_userId: req.params.id,
+            old_data: employee,
+            new_data: updateEmployee,
+            roleName: req.user.roleId.name,
+        });
+        // console.log("check savelogs", saveLogs);
 
         return res.status(200).json(updateEmployee);
     } catch (error) {
@@ -149,6 +161,15 @@ export const backupData = async (req, res) => {
                 if (unlinkErr) console.error("Error deleting file:", unlinkErr);
             });
         });
+
+        const saveLogs = await ActivityLog.create({
+            userId: req.user._id,
+            action: "backupDataEmployee",
+            affected_userId: null,
+            old_data: null,
+            new_data: null,
+            roleName: req.user.roleId.name,
+        });
     } catch (error) {
         console.error("Lỗi khi xuất dữ liệu nhân viên:", error);
         return res
@@ -174,6 +195,7 @@ export const restoreData = async (req, res) => {
 
         // Chuyển dữ liệu từ sheet thành mảng JSON
         const employees = XLSX.utils.sheet_to_json(sheet);
+        console.log("check employees", employees);
 
         // Duyệt qua từng nhân viên và cập nhật vào cơ sở dữ liệu
         for (const empData of employees) {
@@ -192,11 +214,11 @@ export const restoreData = async (req, res) => {
             } = empData;
 
             // Kiểm tra nhân viên có tồn tại trong cơ sở dữ liệu không
-            let employee = await Employee.findOne({ _id: ID });
+            let employeeFind = await Employee.findOne({ _id: ID });
 
-            if (!employee) {
+            if (!employeeFind) {
                 // Nếu không tồn tại, tạo mới
-                employee = new Employee({
+                const employee = new Employee({
                     _id: ID,
                     fullName,
                     dob,
@@ -209,28 +231,40 @@ export const restoreData = async (req, res) => {
                     startDate,
                     avatarUrl: Avatar,
                 });
+                await employee.save();
             } else {
-                // Nếu tồn tại, cập nhật thông tin
-                employee.fullName = fullName;
-                employee.dob = dob;
-                employee.gender = gender;
-                employee.address = address;
-                employee.phone = phone;
-                employee.departmentId = departmentId;
-                employee.positionId = positionId;
-                employee.base_salary = base_salary;
-                employee.startDate = startDate;
-                employee.avatarUrl = Avatar;
+                const updateEmployee = await Employee.findByIdAndUpdate(
+                    { _id: ID },
+                    {
+                        fullName,
+                        dob,
+                        gender,
+                        address,
+                        phone,
+                        departmentId,
+                        positionId,
+                        base_salary,
+                        startDate,
+                        avatarUrl: Avatar,
+                    }
+                );
             }
 
             // Lưu thông tin vào cơ sở dữ liệu
-            await employee.save();
         }
 
         // Xóa file tạm sau khi xử lý xong
         fs.unlinkSync(filePath);
 
         // Trả lời thông báo thành công
+        const saveLogs = await ActivityLog.create({
+            userId: req.user._id,
+            action: "restoreDataEmployee",
+            affected_userId: null,
+            old_data: null,
+            new_data: null,
+            roleName: req.user.roleId.name,
+        });
         return res.status(200).json({ message: "Dữ liệu phục hồi thành công" });
     } catch (error) {
         console.error("Lỗi khi phục hồi dữ liệu:", error);
@@ -264,8 +298,16 @@ export const updateEmployeeByAdmin = async (req, res) => {
             base_salary: req.body.base_salary,
             startDate: req.body.startDate,
             avatarUrl: req.body.avatarUrl,
-        });
+        }).select("-password");
 
+        const saveLogs = await ActivityLog.create({
+            userId: req.user._id,
+            action: "update",
+            affected_userId: updateEmployee._id,
+            old_data: employee,
+            new_data: updateEmployee,
+            roleName: req.user.roleId.name,
+        });
         return res.status(200).json("updateEmployee");
     } catch (error) {
         console.error("Lỗi khi cập nhật nhân viên:", error);
@@ -284,7 +326,14 @@ export const adminDeleteEmployee = async (req, res) => {
         }
 
         await Employee.findByIdAndDelete(req.body.id);
-
+        const saveLogs = await ActivityLog.create({
+            userId: req.user._id,
+            action: "delete",
+            affected_userId: employee._id,
+            old_data: employee,
+            new_data: null,
+            roleName: req.user.roleId.name,
+        });
         return res.status(200).json("deleteEmployee");
     } catch (error) {
         console.error("Lỗi khi xóa nhân viên:", error);

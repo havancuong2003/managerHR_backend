@@ -10,7 +10,7 @@ import {
     generateRefreshToken,
 } from "../middlewares/authMiddleware.js";
 import jwt from "jsonwebtoken";
-
+import ActivityLog from "../models/activity_log.model.js";
 export const getRoleId = async (roleName) => {
     try {
         const role = await Role.findOne({ name: roleName });
@@ -33,6 +33,10 @@ const register = async (req, res) => {
             base_salary,
             startDate,
         } = req.body;
+        const validation = validateRegisterData(req.body);
+        if (!validation.isValid) {
+            return res.status(400).json({ message: validation.message });
+        }
         // Check if phone already exists
         const existingUser = await User.findOne({ phone });
         if (existingUser) {
@@ -65,13 +69,97 @@ const register = async (req, res) => {
             roleId: roleId,
             avatarUrl,
         });
-
         await user.save();
+        const userWithOutPassword = await User.findById(user._id).select(
+            "-password"
+        );
+        console.log("user", user);
+
+        const saveLogs = await ActivityLog.create({
+            userId: req.user._id,
+            action: "create",
+            affected_userId: user._id,
+            old_data: null,
+            new_data: userWithOutPassword,
+            roleName: req.user.roleId.name,
+        });
         return res.status(201).json({ user });
     } catch (error) {
         console.log("Error while registering:", error);
         return res.status(500).json({ message: "Server error!" });
     }
+};
+
+// validate.js - Tạo hàm validate riêng
+const validateRegisterData = (data) => {
+    const {
+        fullName,
+        dob,
+        gender,
+        address,
+        phone,
+        department,
+        position,
+        base_salary,
+        startDate,
+    } = data;
+
+    // Validate fullName: Ít nhất 3 ký tự
+    if (!fullName || fullName.length < 3) {
+        return { isValid: false, message: "Tên ít nhất 3 ký tự" };
+    }
+
+    // Validate dob: Ngày sinh phải hợp lệ và phải là trong quá khứ
+    if (!dob || isNaN(Date.parse(dob)) || new Date(dob) >= new Date()) {
+        return { isValid: false, message: "Ngày sinh phải ở trong quá khứ" };
+    }
+
+    // Validate gender: Chỉ chấp nhận "Nam" hoặc "Nữ"
+    if (!gender || !["Nam", "Nữ"].includes(gender)) {
+        return {
+            isValid: false,
+            message: "Giới tính chỉ có thể là Nam hoặc Nữ",
+        };
+    }
+
+    // Validate address: Địa chỉ ít nhất 5 ký tự
+    if (!address || address.length < 5) {
+        return { isValid: false, message: "Địa chỉ ít nhất 5 ký tự" };
+    }
+
+    // Validate phone: Số điện thoại phải có 10 chữ số
+    if (!phone || !/^\d{10}$/.test(phone)) {
+        return { isValid: false, message: "Số điện thoại phải có 10 số" };
+    }
+
+    // Validate department: Phòng ban không được trống
+    if (!department || department.length < 1) {
+        return { isValid: false, message: "Chọn phòng ban" };
+    }
+
+    // Validate position: Chức vụ không được trống
+    if (!position || position.length < 1) {
+        return { isValid: false, message: "Chọn chức vụ" };
+    }
+
+    // Validate base_salary: Lương tối thiểu 3 triệu
+    if (!base_salary || base_salary < 3000000) {
+        return { isValid: false, message: "Lương tối thiểu 3 triệu" };
+    }
+
+    // Validate startDate: Ngày bắt đầu phải ở trong tương lai
+    if (
+        !startDate ||
+        isNaN(Date.parse(startDate)) ||
+        new Date(startDate) <= new Date()
+    ) {
+        return {
+            isValid: false,
+            message: "Ngày bắt đầu phải ở trong tương lai",
+        };
+    }
+
+    return { isValid: true };
 };
 
 const login = async (req, res) => {
@@ -80,12 +168,12 @@ const login = async (req, res) => {
         const user = await User.findOne({ phone }).populate("roleId");
 
         if (!user) {
-            return res.status(401).json({ error: "Invalid phone or password" });
+            return res.status(400).json({ error: "Invalid phone or password" });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(401).json({ error: "Invalid phone or password" });
+            return res.status(400).json({ error: "Invalid phone or password" });
         }
 
         const accessToken = generateAccessToken(user);
