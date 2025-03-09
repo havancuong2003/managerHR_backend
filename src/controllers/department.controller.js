@@ -59,8 +59,10 @@ export const getEmployeesByDepartment = async (req, res) => {
             .populate("departmentId")
             .populate("positionId")
             .populate("roleId");
-        return res.status(200).json(
-            employees.map((employee) => {
+        return res.status(200).json({
+            department: employees[0].departmentId.name,
+            NumberOfEmployees: employees.length,
+            employees: employees.map((employee) => {
                 return {
                     fullName: employee.fullName,
                     dob: employee.dob,
@@ -71,8 +73,8 @@ export const getEmployeesByDepartment = async (req, res) => {
                     roleName: employee.roleId.name,
                     baseSalary: employee.base_salary,
                 };
-            })
-        );
+            }),
+        });
     } catch (error) {
         console.error("Lỗi khi lấy danh sách nhân viên theo phòng ban:", error);
         return res.status(500).json({ message: "Server error!" });
