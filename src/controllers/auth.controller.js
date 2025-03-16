@@ -199,6 +199,7 @@ const login = async (req, res) => {
             userId: user._id,
         });
     } catch (error) {
+        console.log("Error while logging in:", error);
         res.status(500).json({ error: error.message });
     }
 };

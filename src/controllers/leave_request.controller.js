@@ -1,5 +1,5 @@
-import LeaveRequest from "../models/leave_request.model";
-import Employee from "../models/user.model";
+import LeaveRequest from "../models/leave_request.model.js";
+import Employee from "../models/user.model.js";
 
 export const createLeaveRequest = async (req, res) => {
     try {
