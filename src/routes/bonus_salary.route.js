@@ -3,7 +3,7 @@ import {
     addBonusSalary,
     getBonusSalaryForEmployee,
     getBonusSalaryForDepartment,
-} from "../controllers/bonus_salary.controller";
+} from "../controllers/bonus_salary.controller.js";
 
 const router = express.Router();
 

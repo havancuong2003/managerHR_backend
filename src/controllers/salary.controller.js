@@ -1,7 +1,7 @@
-import Salary from "../models/salary.model";
-import Employee from "../models/user.model";
-import Attendance from "../models/attendance.model";
-import LeaveRequest from "../models/leave_request.model";
+import Salary from "../models/salary.model.js";
+import Employee from "../models/user.model.js";
+import Attendance from "../models/attendance.model.js";
+import LeaveRequest from "../models/leave_request.model.js";
 // ...existing code...
 
 export const addSalary = async (req, res) => {
@@ -36,9 +36,9 @@ export const calculateTotalSalary = async (req, res) => {
         const dailyWage = employee.base_salary; // Giả sử bạn có trường daily_wage trong model Employee
 
         const startOfMonth = new Date(year, month - 1, 1);
-        startOfMonth.setHours(0, 0, 0, 0);
+        startOfMonth.setHours(7, 0, 0, 0);
         const endOfMonth = new Date(year, month, 0);
-        endOfMonth.setHours(23, 59, 59, 999);
+        endOfMonth.setHours(30, 59, 59, 999);
 
         const attendances = await Attendance.find({
             employeeId: employeeId,
@@ -59,8 +59,8 @@ export const calculateTotalSalary = async (req, res) => {
                 const workHours = (timeOut - timeIn) / (1000 * 60 * 60); // Chuyển milliseconds → hours
 
                 // Tính OT
-                if (workHours > 8) {
-                    const overtime = workHours - 8; // Chỉ tính giờ vượt quá 8h làm việc
+                if (workHours > 9) {
+                    const overtime = workHours - 9; // Chỉ tính giờ vượt quá 8h làm việc
                     totalOTHours += overtime;
                 }
             }
@@ -91,12 +91,12 @@ export const getDepartmentSalaryReport = async (req, res) => {
         }
 
         const startOfMonth = new Date(year, month - 1, 1);
-        startOfMonth.setHours(0, 0, 0, 0);
+        startOfMonth.setHours(7, 0, 0, 0);
         const endOfMonth = new Date(year, month, 0);
-        endOfMonth.setHours(23, 59, 59, 999);
+        endOfMonth.setHours(30, 59, 59, 999);
 
         const employees = await Employee.find({ departmentId: departmentId });
-
+        // console.log(employees);
         if (!employees.length) {
             return res
                 .status(404)
@@ -109,54 +109,59 @@ export const getDepartmentSalaryReport = async (req, res) => {
             timeIn: { $ne: null, $gte: startOfMonth, $lte: endOfMonth },
             timeOut: { $ne: null },
         });
+        // console.log(attendances);
 
-        const report = employees.map(async (employee) => {
-            const empAttendances = attendances.filter(
-                (att) => att.employeeId.toString() === employee._id.toString()
-            );
+        const report = await Promise.all(
+            employees.map(async (employee) => {
+                const empAttendances = attendances.filter(
+                    (att) =>
+                        att.employeeId.toString() === employee._id.toString()
+                );
+                // console.log(empAttendances);
 
-            let workDays = 0;
-            let totalOTHours = 0;
+                let workDays = 0;
+                let totalOTHours = 0;
 
-            empAttendances.forEach(async (att) => {
-                if (att.status === "present" && att.timeIn && att.timeOut) {
-                    workDays++;
+                empAttendances.forEach(async (att) => {
+                    if (att.status === "present" && att.timeIn && att.timeOut) {
+                        workDays++;
 
-                    // Tính tổng số giờ làm trong ngày
-                    const timeIn = new Date(att.timeIn);
-                    const timeOut = new Date(att.timeOut);
-                    const workHours = (timeOut - timeIn) / (1000 * 60 * 60); // Chuyển milliseconds → hours
+                        // Tính tổng số giờ làm trong ngày
+                        const timeIn = new Date(att.timeIn);
+                        const timeOut = new Date(att.timeOut);
+                        const workHours = (timeOut - timeIn) / (1000 * 60 * 60); // Chuyển milliseconds → hours
 
-                    // Tính OT
-                    if (workHours > 8) {
-                        const overtime = workHours - 8; // Chỉ tính giờ vượt quá 8h làm việc
-                        totalOTHours += overtime;
+                        // Tính OT
+                        if (workHours > 9) {
+                            const overtime = workHours - 9; // Chỉ tính giờ vượt quá 8h làm việc
+                            totalOTHours += overtime;
+                        }
                     }
-                }
-            });
+                });
 
-            const dailyWage = employee.base_salary; // Giả sử bạn có trường base_salary trong model Employee
-            const baseSalary = dailyWage * workDays;
-            const otSalary = (dailyWage / 8) * totalOTHours;
-            const remainingLeaveDaysSalary =
-                (await calculateRemainingLeavesDays(
-                    employee._id.toString(),
-                    year,
-                    month
-                )) * dailyWage;
-            const totalSalary =
-                baseSalary + otSalary + remainingLeaveDaysSalary;
-
-            return {
-                fullName: employee.fullName,
-                gender: employee.gender,
-                dateOfBirth: employee.dob,
-                workDays: workDays,
-                totalOTHours: totalOTHours,
-                baseSalary: baseSalary,
-                totalSalary: totalSalary,
-            };
-        });
+                const dailyWage = employee.base_salary; // Giả sử bạn có trường base_salary trong model Employee
+                const baseSalary = dailyWage * workDays;
+                const otSalary = (dailyWage / 8) * totalOTHours;
+                const remainingLeaveDaysSalary =
+                    (await calculateRemainingLeavesDays(
+                        employee._id.toString(),
+                        year,
+                        month
+                    )) * dailyWage;
+                const totalSalary =
+                    baseSalary + otSalary + remainingLeaveDaysSalary;
+                console.log(employee.fullName, employee.phone, totalSalary);
+                return {
+                    fullName: employee.fullName,
+                    gender: employee.gender,
+                    dateOfBirth: employee.dob,
+                    workDays: workDays,
+                    totalOTHours: totalOTHours,
+                    baseSalary: baseSalary,
+                    totalSalary: totalSalary,
+                };
+            })
+        );
 
         return res.status(200).json(report);
     } catch (error) {
@@ -179,9 +184,9 @@ export const getQuarterlySalaryReport = async (req, res) => {
         const endMonth = startMonth + 2;
 
         const startOfQuarter = new Date(year, startMonth, 1);
-        startOfQuarter.setHours(0, 0, 0, 0);
+        startOfQuarter.setHours(7, 0, 0, 0);
         const endOfQuarter = new Date(year, endMonth + 1, 0);
-        endOfQuarter.setHours(23, 59, 59, 999);
+        endOfQuarter.setHours(30, 59, 59, 999);
 
         const employees = await Employee.find({ departmentId: departmentId });
 
@@ -264,7 +269,7 @@ const calculateRemainingLeavesDays = async (employeeId, year, month) => {
         leave_reason: { $in: ["Nghỉ phép ốm", "Nghỉ phép bệnh"] },
         start_date: {
             $gte: new Date(`${year}-${month}-01`),
-            $lte: new Date(`${year}-${month}-31`),
+            $lte: new Date(`${year}-${month}-30`),
         },
         status: "approved",
     });
