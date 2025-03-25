@@ -12,6 +12,7 @@ const leaveRequestSchema = new Schema({
         enum: ["pending", "approved", "denied"],
         required: true,
     },
+    createAt: { type: Date, default: Date.now },
     manager_reason: { type: String }, // Admin can add reason for approval/denial
 });
 

@@ -41,7 +41,8 @@ export const getBonusSalaryForEmployee = async (req, res) => {
 
 export const getBonusSalaryForDepartment = async (req, res) => {
     try {
-        const { departmentId, month, year } = req.body;
+        const { departmentId } = req.params;
+        const { month, year } = req.body;
 
         if (!month || !year) {
             return res
@@ -65,8 +66,8 @@ export const getBonusSalaryForDepartment = async (req, res) => {
         const employeeIds = employees.map((emp) => emp._id);
         const bonusSalaries = await BonusSalary.find({
             employeeId: { $in: employeeIds },
-            payment_date: { $gte: startOfMonth, $lte: endOfMonth },
-        }).sort({ payment_date: -1 });
+            createdAt: { $gte: startOfMonth, $lte: endOfMonth },
+        }).sort({ createdAt: -1 });
 
         const report = employees.map((employee) => {
             const empBonusSalaries = bonusSalaries.filter(

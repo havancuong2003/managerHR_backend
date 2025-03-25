@@ -108,7 +108,7 @@ export const getAttendanceByEmployee = async (req, res) => {
                 totalWorkHours += workHours;
 
                 // Nếu làm ≥ 6.5 giờ, tính là 1 ngày công
-                if (workHours >= 7.5) {
+                if (workHours >= 4) {
                     totalWorkDays++;
                 }
 
@@ -215,4 +215,40 @@ export const getAttendanceReportByMonth = async (req, res) => {
     }
 };
 
-// export const
+export const getCheckInAttendance = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const startDate = new Date();
+        startDate.setHours(0, 0, 0, 0);
+
+        const endDate = new Date();
+        endDate.setHours(23, 59, 59, 999);
+        const attendance = await Attendance.findOne({
+            employeeId: id,
+            timeIn: { $gte: startDate, $lte: endDate },
+        });
+        if (attendance) {
+            res.json(attendance);
+        } else {
+            res.json({ message: "Chua Check In" });
+        }
+    } catch (error) {
+        console.error("Lỗi khi check in chấm công:", error);
+        return res.status(500).json({ message: "Server error!" });
+    }
+};
+
+export const getDepartmentIdForManager = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await User.findById(id).populate("departmentId");
+        if (!user) {
+            return res.status(404).json({ message: "Không tìm thấy user!" });
+        }
+        const departmentId = user.departmentId;
+        return res.status(200).json({ departmentId });
+    } catch (error) {
+        console.error("Lỗi khi lấy thông tin phòng ban:", error);
+        return res.status(500).json({ message: "Server error!" });
+    }
+};

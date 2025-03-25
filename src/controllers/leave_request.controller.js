@@ -4,7 +4,7 @@ import Employee from "../models/user.model.js";
 export const createLeaveRequest = async (req, res) => {
     try {
         const { id, leave_reason, start_date, end_date } = req.body;
-        const newLeaveRequest = LeaveRequest.create({
+        const newLeaveRequest = new LeaveRequest({
             employeeId: id,
             leave_reason: leave_reason,
             start_date: start_date,
@@ -15,7 +15,7 @@ export const createLeaveRequest = async (req, res) => {
         return res
             .status(200)
             .json({ message: "Tạo request nghỉ phép thành công!" });
-    } catch {
+    } catch (error) {
         console.error("Lỗi khi tạo leave request:", error);
         return res.status(500).json({ message: "Server error!" });
     }
@@ -46,12 +46,15 @@ export const updateLeaveRequest = async (req, res) => {
 
 export const getRemainingLeaveDays = async (req, res) => {
     try {
-        const { employeeId, year, month } = req.params;
+        const { employeeId } = req.params;
+        const { month, year } = req.body;
+        console.log("month", month);
+        console.log("year", year);
         const employee = await Employee.findById(employeeId);
         const annualLeaveDays = employee.annualLeave;
         const leaveRequests = await LeaveRequest.find({
             employeeId: employeeId,
-            leave_reason: { $in: ["Nghỉ phép ốm", "Nghỉ phép bệnh"] },
+            leave_reason: { $ne: "Nghỉ không lương" },
             start_date: {
                 $gte: new Date(`${year}-${month}-01`),
                 $lte: new Date(`${year}-${month}-31`),
@@ -93,7 +96,9 @@ export const getPendingLeaveRequestsForManager = async (req, res) => {
         const pendingLeaveRequests = await LeaveRequest.find({
             employeeId: { $in: employeeIds },
             status: "pending",
-        });
+        })
+            .populate("employeeId")
+            .sort({ start_date: -1 });
 
         return res
             .status(200)
@@ -110,7 +115,9 @@ export const getLeaveRequestHistoryForEmployee = async (req, res) => {
 
         const leaveRequests = await LeaveRequest.find({
             employeeId: employeeId,
-        }).sort({ start_date: -1 }); // Sắp xếp theo thời gian gần nhất
+        })
+            .populate("employeeId")
+            .sort({ start_date: -1 }); // Sắp xếp theo thời gian gần nhất
 
         return res.status(200).json({ leaveRequests: leaveRequests });
     } catch (error) {
@@ -137,8 +144,10 @@ export const getLeaveRequestHistoryForManager = async (req, res) => {
 
         const leaveRequests = await LeaveRequest.find({
             employeeId: { $in: employeeIds },
-            status: { $in: ["approved", "denied"] },
-        }).sort({ start_date: -1 }); // Sắp xếp theo thời gian gần nhất
+            status: { $in: ["approved", "denied", "pending"] },
+        })
+            .populate("employeeId")
+            .sort({ start_date: -1 }); // Sắp xếp theo thời gian gần nhất
 
         return res.status(200).json({ leaveRequests: leaveRequests });
     } catch (error) {
