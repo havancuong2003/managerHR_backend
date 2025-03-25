@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import fs from "fs";
 import mongoose from "mongoose";
 import ActivityLog from "../models/activity_log.model.js";
+import bcrypt from "bcryptjs";
 
 // Thêm những dòng này để thay thế __dirname trong ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -218,6 +219,8 @@ export const restoreData = async (req, res) => {
 
             if (!employeeFind) {
                 // Nếu không tồn tại, tạo mới
+                // hashpassword 123
+                const password = await bcrypt.hash("123", 10);
                 const employee = new Employee({
                     _id: ID,
                     fullName,
@@ -230,6 +233,7 @@ export const restoreData = async (req, res) => {
                     base_salary,
                     startDate,
                     avatarUrl: Avatar,
+                    password,
                 });
                 await employee.save();
             } else {

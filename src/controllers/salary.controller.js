@@ -2,6 +2,7 @@ import Salary from "../models/salary.model.js";
 import Employee from "../models/user.model.js";
 import Attendance from "../models/attendance.model.js";
 import LeaveRequest from "../models/leave_request.model.js";
+import BonusSalary from "../models/bonus_salary.model.js";
 // ...existing code...
 
 export const addSalary = async (req, res) => {
@@ -68,12 +69,23 @@ export const calculateTotalSalary = async (req, res) => {
 
         const baseSalary = dailyWage * workDays;
         const otSalary = (dailyWage / 8) * totalOTHours;
+        const remainingLeaveDays = await calculateRemainingLeavesDays(
+            employeeId,
+            year,
+            month
+        );
         const remainingLeaveDaysSalary =
             (await calculateRemainingLeavesDays(employeeId, year, month)) *
             dailyWage;
         const totalSalary = baseSalary + otSalary + remainingLeaveDaysSalary;
 
-        return res.status(200).json({ totalSalary, workDays, totalOTHours });
+        return res.status(200).json({
+            totalSalary,
+            workDays,
+            totalOTHours,
+            remainingLeaveDays,
+            dailyWage,
+        });
     } catch (error) {
         console.error("Error calculating total salary:", error);
         return res.status(500).json({ message: "Server error!" });
@@ -148,16 +160,33 @@ export const getDepartmentSalaryReport = async (req, res) => {
                         year,
                         month
                     )) * dailyWage;
+                const remainingLeaveDays = await calculateRemainingLeavesDays(
+                    employee._id.toString(),
+                    year,
+                    month
+                );
+                const totalBonusSalary = await calculateTotalBonusSalary(
+                    employee._id.toString(),
+                    year,
+                    month
+                );
                 const totalSalary =
-                    baseSalary + otSalary + remainingLeaveDaysSalary;
+                    baseSalary +
+                    otSalary +
+                    remainingLeaveDaysSalary +
+                    totalBonusSalary;
                 console.log(employee.fullName, employee.phone, totalSalary);
                 return {
+                    id: employee._id,
                     fullName: employee.fullName,
                     gender: employee.gender,
                     dateOfBirth: employee.dob,
                     workDays: workDays,
                     totalOTHours: totalOTHours,
                     baseSalary: baseSalary,
+                    bonus_salary: totalBonusSalary,
+                    dailyWage: dailyWage,
+                    remainingLeaveDays: remainingLeaveDays,
                     totalSalary: totalSalary,
                 };
             })
@@ -242,9 +271,11 @@ export const getSalaryByEmployeeId = async (req, res) => {
     try {
         const { employeeId } = req.params;
 
-        const salaries = await Salary.find({ employeeId }).sort({
-            payment_date: -1,
-        });
+        const salaries = await Salary.find({ employeeId })
+            .populate("employeeId")
+            .sort({
+                payment_date: -1,
+            });
 
         if (!salaries.length) {
             return res.status(404).json({
@@ -266,7 +297,7 @@ const calculateRemainingLeavesDays = async (employeeId, year, month) => {
     const annualLeaveDays = employee.annualLeave;
     const leaveRequests = await LeaveRequest.find({
         employeeId: employeeId,
-        leave_reason: { $in: ["Nghỉ phép ốm", "Nghỉ phép bệnh"] },
+        leave_reason: { $ne: "Nghỉ không lương" },
         start_date: {
             $gte: new Date(`${year}-${month}-01`),
             $lte: new Date(`${year}-${month}-30`),
@@ -285,5 +316,23 @@ const calculateRemainingLeavesDays = async (employeeId, year, month) => {
 
     const remainingLeaveDays = annualLeaveDays - usedLeaveDays;
     return remainingLeaveDays;
+};
+
+const calculateTotalBonusSalary = async (employeeId, year, month) => {
+    // Code to calculate total bonus salary
+    // ...
+    const startOfMonth = new Date(year, month - 1, 1);
+    startOfMonth.setHours(7, 0, 0, 0);
+    const endOfMonth = new Date(year, month, 0);
+    endOfMonth.setHours(30, 59, 59, 999);
+    const bonusSalaries = await BonusSalary.find({
+        employeeId: employeeId,
+        createdAt: { $gte: startOfMonth, $lte: endOfMonth },
+    });
+    const totalBonusSalary = bonusSalaries.reduce(
+        (total, salary) => total + salary.bonus_salary,
+        0
+    );
+    return totalBonusSalary;
 };
 // ...existing code...

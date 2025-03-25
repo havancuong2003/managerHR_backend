@@ -7,16 +7,31 @@ import {
     deleteDepartment,
     getEmployeesByDepartment,
 } from "../controllers/department.controller.js";
+import {
+    authMiddleware,
+    roleMiddleware,
+    positionMiddleware,
+} from "../middlewares/authMiddleware.js";
 const router = express.Router();
 
-router.get("/", getDepartments);
+router.get("/", authMiddleware, roleMiddleware(["admin"]), getDepartments);
 
-router.post("/", createDepartment);
+router.post("/", authMiddleware, roleMiddleware(["admin"]), createDepartment);
 
-router.put("/:id", updateDepartment);
+router.put("/:id", authMiddleware, roleMiddleware(["admin"]), updateDepartment);
 
-router.delete("/:id", deleteDepartment);
+router.delete(
+    "/:id",
+    authMiddleware,
+    roleMiddleware(["admin"]),
+    deleteDepartment
+);
 
-router.get("/employees/:id", getEmployeesByDepartment);
+router.get(
+    "/employees/:id",
+    authMiddleware,
+    positionMiddleware(["Manager"]),
+    getEmployeesByDepartment
+);
 
 export default router;

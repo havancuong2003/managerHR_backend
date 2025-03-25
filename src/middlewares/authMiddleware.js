@@ -3,7 +3,7 @@ import User from "../models/user.model.js";
 import RefreshToken from "../models/refresh_token.model.js";
 import { getRoleId } from "../controllers/auth.controller.js";
 import Role from "../models/role.model.js";
-
+import Position from "../models/position.model.js";
 const authMiddleware = async (req, res, next) => {
     try {
         const token = req.cookies.accessToken;
@@ -15,8 +15,8 @@ const authMiddleware = async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await User.findById(decoded.id)
             .select("-password")
-            .populate("roleId");
-
+            .populate("roleId")
+            .populate("positionId");
         if (!user) {
             return res.status(401).json({ message: "User not found" });
         }
@@ -75,9 +75,28 @@ const roleMiddleware = (roles) => async (req, res, next) => {
     }
 };
 
+const positionMiddleware = (positions) => async (req, res, next) => {
+    try {
+        const getPosition = await Position.findById(req.user.positionId); // ✅ Truy vấn đúng
+
+        if (!getPosition || !positions.includes(getPosition.name)) {
+            // ✅ Kiểm tra role
+            return res
+                .status(403)
+                .json({ message: "Forbidden: You don't have permission" });
+        }
+
+        next(); // ✅ Cho phép request tiếp tục
+    } catch (error) {
+        console.error("Error in positionMiddleware:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
 export {
     authMiddleware,
     generateAccessToken,
     generateRefreshToken,
     roleMiddleware,
+    positionMiddleware,
 };

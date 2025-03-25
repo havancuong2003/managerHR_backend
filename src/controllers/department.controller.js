@@ -55,22 +55,23 @@ export const deleteDepartment = async (req, res) => {
 export const getEmployeesByDepartment = async (req, res) => {
     try {
         const { id } = req.params;
+        console.log(id);
+        const department = await Department.findById(id);
         const employees = await User.find({ departmentId: id })
             .populate("departmentId")
             .populate("positionId")
             .populate("roleId");
         return res.status(200).json({
-            department: employees[0].departmentId.name,
             NumberOfEmployees: employees.length,
             employees: employees.map((employee) => {
                 return {
+                    _id: employee._id,
                     fullName: employee.fullName,
                     dob: employee.dob,
                     gender: employee.gender,
                     address: employee.address,
                     phone: employee.phone,
                     positionName: employee.positionId.name,
-                    roleName: employee.roleId.name,
                     baseSalary: employee.base_salary,
                 };
             }),

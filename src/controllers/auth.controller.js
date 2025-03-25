@@ -190,7 +190,7 @@ const login = async (req, res) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "Strict",
-            maxAge: 5 * 60 * 1000, // 5 phút
+            maxAge: 5 * 60 * 30 * 24 * 1000, // 5 phút
         });
 
         res.status(200).json({
@@ -257,7 +257,7 @@ export const refreshToken = async (req, res) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "Strict",
-            maxAge: 5 * 60 * 1000, // 5  phut
+            maxAge: 5 * 60 * 30 * 24 * 1000, // 5  phut
         });
 
         // ✅ Trả về Access Token mới
